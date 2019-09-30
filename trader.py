@@ -120,7 +120,7 @@ def import_trades(cube, ex, creds, since):
     url = '/trades'
 
     if ex.name in ['Binance', 'Liquid']:
-        while int(since) < int(now):
+        while since < now:
             new_trades = pd.DataFrame()
             for bal in cube.balances:
                 ex_pairs = ExPair.query.filter_by(
@@ -147,7 +147,7 @@ def import_trades(cube, ex, creds, since):
                 new_trades.timestamp = new_trades.timestamp.astype(np.int64)//10**6
                 since = int(new_trades.iloc[-1].timestamp) + 1
                 trades = trades.append(new_trades)
-            elif int(since) < int(now):
+            elif since < now:
                 # 10 days in milliseconds
                 since = since + 24 * 60 * 60 * days * 1000
             else:
@@ -243,6 +243,7 @@ def import_transactions(cube, ex, creds, since):
     now = time() * 1000
     trans = pd.DataFrame()
     url = '/transactions'
+    old_since = 0
 
     while True:
         args = {**creds, **{'since': since}}
@@ -253,7 +254,13 @@ def import_transactions(cube, ex, creds, since):
         if not new_trans.empty:
             new_trans.timestamp = new_trans.timestamp.astype(np.int64)//10**6
             since = new_trans.iloc[-1].timestamp + 1
+            if old_since == since:
+                break
+            old_since = since
             trans = trans.append(new_trans)
+        elif since < now:
+            # 10 days in milliseconds
+            since = since + 24 * 60 * 60 * days * 1000
         else:
             break   
 
