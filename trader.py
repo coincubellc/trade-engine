@@ -245,7 +245,7 @@ def import_transactions(cube, ex, creds, since):
     url = '/transactions'
     old_since = 0
 
-    while True:
+    while since < now:
         args = {**creds, **{'since': since}}
         new_trans = api_request(cube, 'GET', ex.name, url, args)
         if not new_trans:
@@ -345,12 +345,12 @@ def update_transactions(cube, creds):
 
     try:
         ts = get_start_timestamp(cube, db_tx)
-        log.debug(f'{cube} Get Transactions')
+        log.debug(f'{cube} Get Transactions from {ts}')
         import_transactions(cube, cube.exchange, creds, ts)
     except Exception as e:
         log.debug(e)
     try:
-        log.debug(f'{cube} Get Trades')
+        log.debug(f'{cube} Get Trades from {ts}')
         import_trades(cube, cube.exchange, creds, ts)
     except Exception as e:
         log.debug(e)
